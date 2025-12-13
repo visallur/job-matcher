@@ -7,7 +7,6 @@ from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, SystemMessage
 from src.search import JobMatcher
 
-# Load environment variables (The .env file)
 load_dotenv()
 
 st.set_page_config(page_title="AI Job Matcher", layout="wide")
@@ -19,14 +18,12 @@ def load_matcher():
 matcher = load_matcher()
 
 def analyze_gaps(job_desc, resume_text):
-    # --- FIX: This checks for the LABEL "OPENAI_API_KEY", not the key itself ---
     api_key = os.getenv("OPENAI_API_KEY")
     
     if not api_key:
         return "Error: OpenAI API Key not found. Please check your .env file."
     
     try:
-        # We pass the key explicitly to avoid confusion
         chat = ChatOpenAI( model_name="llama-3.3-70b-versatile", openai_api_key=api_key, openai_api_base="https://api.groq.com/openai/v1"  )
         
         prompt = f"""
@@ -55,7 +52,7 @@ def analyze_gaps(job_desc, resume_text):
     except Exception as e:
         return f"Error connecting to OpenAI: {str(e)}"
 
-# --- UI LAYOUT ---
+#UI Layout
 st.title("Resume Matcher & Gap Analysis")
 
 col1, col2 = st.columns(2)
@@ -83,15 +80,12 @@ with col2:
             with st.expander(f"Rank {res['rank']} - Score: {res['score']} - {category}"):
                 st.write("**Resume Snippet:**")
                 st.info(res['text'])
-                
-                # Unique key for each button
                 btn_key = f"analyze_{res['rank']}"
                 if st.button(f"Generate Gap Analysis (AI)", key=btn_key):
-                    with st.spinner("Consulting GPT..."):
+                    with st.spinner("Consulting Grok"):
                         analysis = analyze_gaps(job_input, res['text'])
                         st.markdown("### AI Assessment")
                         st.write(analysis)
-
 st.sidebar.markdown("---")
 st.sidebar.header("System Stats")
 st.sidebar.text(f"Jobs Indexed: {len(matcher.jobs_df)}")

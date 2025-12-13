@@ -6,34 +6,30 @@ from sentence_transformers import SentenceTransformer
 from src.config import PROCESSED_DATA_DIR, INDEX_DIR, MODEL_NAME
 
 def build_indices():
-    # 1. Setup
+    
     print(f"Loading AI Model: {MODEL_NAME}...")
     model = SentenceTransformer(MODEL_NAME)
     os.makedirs(INDEX_DIR, exist_ok=True)
 
-    # 2. Build Job Index
     jobs_path = os.path.join(PROCESSED_DATA_DIR, 'jobs_processed.csv')
     if os.path.exists(jobs_path):
         print("\n--- Processing Jobs ---")
         df_jobs = pd.read_csv(jobs_path)
-        
-        # Safety: ensure text column is string
+
         df_jobs['text'] = df_jobs['text'].fillna("").astype(str)
         
         print(f"Generating embeddings for {len(df_jobs)} jobs... (Sit tight, this takes time)")
         job_embeddings = model.encode(df_jobs['text'].tolist(), show_progress_bar=True)
         
-        # Create FAISS Index
         d = job_embeddings.shape[1]
         job_index = faiss.IndexFlatL2(d)
         job_index.add(job_embeddings)
         
-        # Save Index and Metadata
+
         faiss.write_index(job_index, os.path.join(INDEX_DIR, 'jobs.index'))
         df_jobs.to_pickle(os.path.join(INDEX_DIR, 'jobs_metadata.pkl'))
         print("✔ Jobs index saved.")
     
-    # 3. Build Resume Index
     resumes_path = os.path.join(PROCESSED_DATA_DIR, 'resumes_processed.csv')
     if os.path.exists(resumes_path):
         print("\n--- Processing Resumes ---")

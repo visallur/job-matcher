@@ -41,14 +41,11 @@ def ingest_jobs():
         axis=1
     )
     
-    # Rename 'job_id' to 'id' if it exists, otherwise use index
     if 'job_id' in df.columns:
         df = df.rename(columns={'job_id': 'id'})
     else:
         df['id'] = df.index
 
-    # Keep only necessary columns
-    # We use .get to be safe if a column is missing
     df_processed = df[['id', 'title', 'text']].copy()
     
     output_path = os.path.join(PROCESSED_DATA_DIR, 'jobs_processed.csv')
@@ -68,14 +65,10 @@ def ingest_resumes():
 
     df = pd.read_csv(resumes_path)
     
-    # 1. Clean Column Names (Fixes the weird \ufeff character)
     df.columns = df.columns.str.replace(r'[^\w\s]', '', regex=True).str.strip()
-    # Now '\ufeffjob_position_name' becomes just 'job_position_name'
 
     print("Cleaning Resumes text...")
     
-    # 2. Construct the text from available columns
-    # We combine Objective, Skills, and Responsibilities to make a rich profile
     def build_resume_text(row):
         parts = []
         if pd.notna(row.get('job_position_name')):
@@ -91,12 +84,10 @@ def ingest_resumes():
 
     df['text'] = df.apply(build_resume_text, axis=1)
     
-    # 3. Create ID and Metadata
     df['id'] = df.index
-    # Use job_position_name as the category/label
+
     df['Category'] = df.get('job_position_name', 'Unknown')
     
-    # 4. Save
     df_processed = df[['id', 'Category', 'text']]
     
     output_path = os.path.join(PROCESSED_DATA_DIR, 'resumes_processed.csv')
